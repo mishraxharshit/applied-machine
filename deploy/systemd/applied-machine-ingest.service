@@ -1,0 +1,23 @@
+# Run the ingest collector as a Linux service.
+#   sudo useradd --system --home /var/lib/applied-machine ingest
+#   sudo install -D bin/ingest /usr/local/bin/ingest
+#   sudo cp deploy/systemd/applied-machine-ingest.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now applied-machine-ingest
+[Unit]
+Description=Applied Machine trace ingest
+After=network.target
+
+[Service]
+User=ingest
+Environment=ADDR=127.0.0.1:8080
+Environment=TRACES_FILE=/var/lib/applied-machine/traces.jsonl
+StateDirectory=applied-machine
+ExecStart=/usr/local/bin/ingest
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

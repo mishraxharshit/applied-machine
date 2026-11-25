@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tracetune"
+version = "0.1.0"
+description = "Turn your agent's production traces into training data, safely."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []          # zero runtime deps on purpose: easy to install, easy to trust
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+tracetune = "tracetune.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tracetune"]

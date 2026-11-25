@@ -1,0 +1,14 @@
+# One command brings up the whole local stack:  docker compose up --build
+services:
+  ingest:
+    build: ./services/ingest
+    ports: ["8080:8080"]
+    volumes: ["./data:/data"]
+  tracecore:            # run on demand: docker compose run --rm tracecore /data/traces.jsonl /data/clean.jsonl
+    build: ./crates/tracecore
+    volumes: ["./data:/data"]
+    profiles: ["tools"]
+  tracetune:            # docker compose run --rm tracetune build --traces /data/clean.jsonl --out /data/dataset.jsonl
+    build: ./packages/tracetune-py
+    volumes: ["./data:/data"]
+    profiles: ["tools"]
