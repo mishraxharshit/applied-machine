@@ -1,8 +1,12 @@
 ---
 name: Bug report
 about: Something is broken
-labels: bug
+title: ''
+labels: bug, enhancement
+assignees: ''
+
 ---
+
 **What happened**
 
 **Expected**
