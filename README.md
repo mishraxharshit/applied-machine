@@ -28,3 +28,5 @@ curl -X POST localhost:8080/v1/traces -d '{"trace_id":"a","input":"hi","output":
 ```
 
 License: Apache-2.0
+
+---
