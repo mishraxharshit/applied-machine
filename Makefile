@@ -1,4 +1,4 @@
-.PHONY: test up down site install doctor
+.PHONY: test up down site install doctor demo
 test:            ## run all tests
 	cd packages/tracetune-py && PYTHONPATH=src python3 -m unittest discover -s tests -v
 	cd services/ingest && go vet ./...
@@ -13,3 +13,5 @@ install:         ## set up Python venv and build Go/Rust (Linux)
 	bash scripts/install.sh
 doctor:          ## check which tools are installed
 	bash scripts/doctor.sh
+demo:           ## 60-second demo, Python only
+	bash scripts/demo.sh

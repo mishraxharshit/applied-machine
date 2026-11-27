@@ -1,0 +1,76 @@
+---
+const base = import.meta.env.BASE_URL.replace(/\/$/, "") + "/";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Playground · Applied Machine</title>
+    <link rel="icon" href={`${base}favicon.svg`} />
+  </head>
+  <body>
+    <main>
+      <a class="back" href={base}>← back</a>
+      <h1>Try it in your browser</h1>
+      <p class="lede">
+        Paste agent traces (one JSON object per line). See how each one is scored, which are kept,
+        and download the training dataset. It all runs in your browser. Nothing is uploaded.
+      </p>
+
+      <div class="glass">
+        <textarea id="input" spellcheck="false" placeholder="Paste traces here, or click Load sample"></textarea>
+        <div class="row">
+          <button id="sample">Load sample</button>
+          <label>min score <input id="min" type="number" step="0.1" value="0" /></label>
+          <label><input id="dedup" type="checkbox" checked /> keep best run per input</label>
+          <button id="run" class="primary">Run</button>
+        </div>
+        <p id="error" class="error"></p>
+      </div>
+
+      <div id="results" class="glass" hidden>
+        <p id="stats" class="stats"></p>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>trace</th><th>input</th><th>score</th><th>result</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <h2>Training dataset</h2>
+        <textarea id="dataset" readonly spellcheck="false"></textarea>
+        <div class="row"><button id="download">Download dataset.jsonl</button></div>
+      </div>
+
+      <p class="dim">Same logic as the Python tool in the repo. Format: see docs/trace-format.md.</p>
+    </main>
+    <script is:inline src={`${base}playground.js`}></script>
+  </body>
+</html>
+
+<style is:global>
+  :root { --bg:#05060b; --fg:#e8ebf5; --dim:#8b91a8; --a:#7c8cff; --c:#5eead4; --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+  * { box-sizing: border-box; margin: 0; }
+  html { color-scheme: dark; }
+  body { background: radial-gradient(60vw 40vw at 10% -10%, rgba(124,140,255,.35), transparent), radial-gradient(50vw 40vw at 100% 30%, rgba(192,132,252,.25), transparent), var(--bg); color: var(--fg); font-family: var(--mono); line-height: 1.6; min-height: 100vh; }
+  main { max-width: 980px; margin: 0 auto; padding: 2rem 1.5rem 4rem; display: grid; gap: 1.2rem; }
+  .back { color: var(--dim); text-decoration: none; font-size: .85rem; }
+  h1 { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 500; letter-spacing: -.02em; }
+  h2 { font-size: .85rem; font-weight: 400; color: var(--dim); text-transform: uppercase; letter-spacing: .1em; margin-top: 1rem; }
+  .lede, .dim { color: var(--dim); font-size: .9rem; }
+  .glass { background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 1.2rem; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: grid; gap: .8rem; }
+  textarea { width: 100%; min-height: 180px; background: rgba(0,0,0,.35); color: var(--fg); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: .8rem; font: .78rem/1.5 var(--mono); resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; font-size: .85rem; color: var(--dim); }
+  input[type=number] { width: 4.5rem; background: rgba(0,0,0,.35); color: var(--fg); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: .25rem .4rem; font: inherit; }
+  button { font: inherit; font-size: .85rem; color: var(--fg); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: .45rem .9rem; cursor: pointer; }
+  button:hover { border-color: rgba(255,255,255,.45); }
+  button.primary { background: var(--a); border-color: var(--a); color: #05060b; font-weight: 600; }
+  .error { color: #ff8a8a; font-size: .85rem; min-height: 1em; }
+  .stats { color: var(--c); }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .8rem; }
+  th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid rgba(255,255,255,.07); }
+  th { color: var(--dim); font-weight: 400; }
+  tr.kept td:last-child { color: var(--c); }
+  tr.dropped td:last-child { color: #ff9f9f; }
+</style>
