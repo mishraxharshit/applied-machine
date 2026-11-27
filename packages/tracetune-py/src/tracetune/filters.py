@@ -54,6 +54,21 @@ def drop_reason(trace: Trace) -> str:
     return "low_score"
 
 
+def best_per_input(scored: list[tuple[Trace, float]]) -> list[tuple[Trace, float]]:
+    """Keep only the highest-scoring trace for each identical input.
+
+    Lesson learned: dedup must happen AFTER scoring. Removing duplicates first
+    can throw away the best run. On a tie the first trace seen wins, so the
+    result is deterministic. First-seen order of inputs is preserved.
+    """
+    best: dict[str, tuple[Trace, float]] = {}
+    for trace, score in scored:
+        current = best.get(trace.input)
+        if current is None or score > current[1]:
+            best[trace.input] = (trace, score)
+    return list(best.values())
+
+
 @dataclass
 class SelectionResult:
     kept: list[tuple[Trace, float]] = field(default_factory=list)
@@ -69,11 +84,27 @@ def select_traces(
     traces,
     min_score: float = 0.0,
     cfg: RewardConfig = DEFAULT_REWARD,
+    dedup: str = "best",
 ) -> SelectionResult:
-    result = SelectionResult()
-    for trace in traces:
-        result.total += 1
-        score = score_trace(trace, cfg)
+    """Score every trace, optionally keep the best per input, then apply min_score.
+
+    dedup="best": one trace per identical input (default).
+    dedup="none": keep all duplicates.
+    """
+    if dedup not in ("best", "none"):
+        raise ValueError(f"dedup must be 'best' or 'none', got {dedup!r}")
+
+    scored = [(t, score_trace(t, cfg)) for t in traces]
+    result = SelectionResult(total=len(scored))
+
+    if dedup == "best":
+        unique = best_per_input(scored)
+        removed = len(scored) - len(unique)
+        if removed:
+            result.dropped_by_reason["duplicate"] = removed
+        scored = unique
+
+    for trace, score in scored:
         if score >= min_score:
             result.kept.append((trace, score))
         else:

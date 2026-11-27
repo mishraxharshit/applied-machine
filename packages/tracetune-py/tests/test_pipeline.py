@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tracetune.cli import main
 from tracetune.export import trace_to_messages
-from tracetune.filters import score_trace, select_traces
+from tracetune.filters import best_per_input, score_trace, select_traces
 from tracetune.loader import load_traces
 from tracetune.schema import Step, Trace
 
@@ -24,6 +24,40 @@ class ScoringTests(unittest.TestCase):
     def test_failed_run_scores_negative(self):
         t = Trace("x", "q", "", error="timeout")
         self.assertLess(score_trace(t), 0)
+
+
+class DedupTests(unittest.TestCase):
+    def test_keeps_best_scoring_trace_per_input(self):
+        good = Trace("good", "q1", "a", steps=[Step("run_sql", result="ok")], feedback=1)
+        bad = Trace("bad", "q1", "a", steps=[Step("run_sql", result="ok")], feedback=-1)
+        other = Trace("other", "q2", "a")
+        scored = [(bad, score_trace(bad)), (good, score_trace(good)), (other, score_trace(other))]
+        kept = best_per_input(scored)
+        self.assertEqual({t.trace_id for t, _ in kept}, {"good", "other"})
+
+    def test_tie_keeps_first_seen(self):
+        a = Trace("first", "q1", "a")
+        b = Trace("second", "q1", "a")
+        kept = best_per_input([(a, 0.0), (b, 0.0)])
+        self.assertEqual([t.trace_id for t, _ in kept], ["first"])
+
+    def test_best_run_survives_even_if_it_comes_second(self):
+        # The exact bug we found: dedup-first would keep the bad run and lose the good one.
+        bad = Trace("bad", "q1", "a", feedback=-1)
+        good = Trace("good", "q1", "a", feedback=1)
+        result = select_traces([bad, good])
+        self.assertEqual([t.trace_id for t, _ in result.kept], ["good"])
+        self.assertEqual(result.dropped_by_reason, {"duplicate": 1})
+
+    def test_dedup_none_keeps_all_duplicates(self):
+        a = Trace("a", "q1", "x")
+        b = Trace("b", "q1", "x")
+        result = select_traces([a, b], dedup="none")
+        self.assertEqual(len(result.kept), 2)
+
+    def test_invalid_dedup_value_is_rejected(self):
+        with self.assertRaises(ValueError):
+            select_traces([], dedup="maybe")
 
 
 class PipelineTests(unittest.TestCase):

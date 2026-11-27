@@ -22,6 +22,12 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--traces", required=True, help="input traces (.jsonl)")
     build.add_argument("--out", required=True, help="output dataset (.jsonl)")
     build.add_argument("--min-score", type=float, default=0.0, help="keep traces scoring >= this (default 0.0)")
+    build.add_argument(
+        "--dedup",
+        choices=["best", "none"],
+        default="best",
+        help="best: keep only the highest-scoring trace per identical input (default); none: keep all",
+    )
     return parser
 
 
@@ -29,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     try:
-        result = select_traces(load_traces(args.traces), min_score=args.min_score)
+        result = select_traces(load_traces(args.traces), min_score=args.min_score, dedup=args.dedup)
     except (OSError, ValueError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1

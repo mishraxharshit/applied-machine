@@ -1,6 +1,8 @@
 // tracecore: fast, memory-light preprocessing for huge trace files.
 // Why Rust: when trace files reach many GB, streaming + zero-GC speed matters.
-// Today: drop invalid lines and duplicate inputs. Later: hashing, near-dup detection.
+// Today: drop invalid lines and EXACT duplicate lines. It no longer dedups by input:
+// that threw away the best run (see docs/learn/05-failures-and-wins.md). Smart dedup
+// (best score per input) lives in tracetune, after scoring.
 use serde_json::Value;
 use std::collections::HashSet;
 use std::fs::File;
@@ -23,15 +25,11 @@ fn main() -> std::io::Result<()> {
             continue;
         }
         total += 1;
-        let v: Value = match serde_json::from_str(&line) {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!("line {}: {e}", i + 1);
-                continue;
-            }
-        };
-        let key = v.get("input").and_then(Value::as_str).unwrap_or("").to_owned();
-        if seen.insert(key) {
+        if let Err(e) = serde_json::from_str::<Value>(&line) {
+            eprintln!("line {}: {e}", i + 1);
+            continue;
+        }
+        if seen.insert(line.trim().to_owned()) {
             writeln!(out, "{line}")?;
             kept += 1;
         }
