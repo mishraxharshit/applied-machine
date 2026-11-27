@@ -10,3 +10,4 @@ We aim to acknowledge reports within 3 working days.
 - `services/ingest` accepts data over HTTP. Run it behind a reverse proxy with authentication
   if exposed beyond localhost.
 - Production traces may contain personal data. Scrub or anonymize before training.
+
