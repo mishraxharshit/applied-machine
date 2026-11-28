@@ -19,7 +19,7 @@ This generates 60 messy fake agent traces (retries, wrong answers, crashes), sco
 Install the Python tool straight from GitHub (no PyPI yet):
 
 ```bash
-pip install "git+https://github.com/YOUR-USERNAME/applied-machine#subdirectory=packages/tracetune-py"
+pip install "git+https://github.com/mishraxharshit/applied-machine#subdirectory=packages/tracetune-py"
 tracetune build --traces my_traces.jsonl --out dataset.jsonl
 ```
 
