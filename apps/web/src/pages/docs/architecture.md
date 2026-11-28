@@ -67,7 +67,7 @@ Working on all components requires Go, Rust, and Python. Run `bash scripts/docto
 ## Limitations
 
 - Applied Machine does not train models. It prepares the data.
-- Traces must use the [trace format](https://github.com/YOUR-USERNAME/applied-machine/blob/main/docs/trace-format.md). Importers for other formats are planned.
+- Traces must use the [trace format](https://github.com/mishraxharshit/applied-machine/blob/main/docs/trace-format.md). Importers for other formats are planned.
 
 ## What's next
 
