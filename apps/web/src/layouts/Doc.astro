@@ -1,76 +1,153 @@
 ---
 import site from "../data/site.json";
-const { frontmatter } = Astro.props;
+const { frontmatter, headings = [] } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "") + "/";
 const here = Astro.url.pathname.replace(/\/?$/, "/");
-const chapters = [
+const nav = [
   { slug: "", title: "Overview" },
-  { slug: "architecture/", title: "1. The improvement loop" },
-  { slug: "scoring/", title: "2. Scoring and dedup" },
+  { group: "Concepts" },
+  { slug: "architecture/", title: "How it works" },
+  { slug: "scoring/", title: "Scoring and deduplication" },
 ];
+const toc = headings.filter((h) => h.depth === 2);
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{frontmatter.title} · Applied Machine Docs</title>
+    <title>{frontmatter.title} | Applied Machine docs</title>
     <link rel="icon" href={`${base}favicon.svg`} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script is:inline>
+      try { var t = localStorage.getItem("am-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    </script>
   </head>
   <body>
     <header>
-      <a class="logo" href={base}>◐ applied machine</a>
-      <span class="ver">docs for v{site.version}</span>
-      <nav><a href={`${base}docs/`}>Docs</a><a href={`${base}playground/`}>Playground</a></nav>
+      <a class="logo" href={base}>◐ Applied Machine</a>
+      <span class="ver">v{site.version}</span>
+      <nav>
+        <a href={`${base}docs/`}>Docs</a>
+        <a href={`${base}playground/`}>Playground</a>
+        <button id="theme" type="button" aria-label="Toggle color theme" title="Toggle light or dark">◐</button>
+      </nav>
     </header>
     <div class="wrap">
       <aside>
-        {chapters.map((c) => (
-          <a href={`${base}docs/${c.slug}`} class={here === `${base}docs/${c.slug}` ? "active" : ""}>{c.title}</a>
-        ))}
+        {nav.map((c) =>
+          c.group ? (
+            <p class="grp">{c.group}</p>
+          ) : (
+            <a href={`${base}docs/${c.slug}`} class={here === `${base}docs/${c.slug}` ? "active" : ""}>{c.title}</a>
+          ),
+        )}
       </aside>
       <article class="prose"><slot /></article>
+      {toc.length > 0 && (
+        <nav class="toc" aria-label="On this page">
+          <p class="grp">On this page</p>
+          {toc.map((h) => <a href={`#${h.slug}`}>{h.text}</a>)}
+        </nav>
+      )}
     </div>
-    <footer>Documentation for v{site.version}. Updated with every release. Every feature is marked Implemented or Planned.</footer>
+    <footer>Documentation for version {site.version}. Found a mistake? Please open an issue in the repository.</footer>
     <script is:inline type="module">
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "dark" });
+      const root = document.documentElement;
+      const isDark = () => (root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches);
+      mermaid.initialize({ startOnLoad: true, theme: isDark() ? "dark" : "default", fontFamily: "Inter, system-ui, sans-serif" });
+
+      document.getElementById("theme").addEventListener("click", () => {
+        const next = isDark() ? "light" : "dark";
+        root.dataset.theme = next;
+        try { localStorage.setItem("am-theme", next); } catch (e) {}
+        location.reload();
+      });
+
+      document.querySelectorAll(".prose pre:not(.mermaid)").forEach((pre) => {
+        const text = pre.innerText;
+        const btn = document.createElement("button");
+        btn.className = "copy";
+        btn.type = "button";
+        btn.textContent = "Copy";
+        btn.addEventListener("click", async () => {
+          try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
+          catch (e) { btn.textContent = "Press Ctrl+C"; }
+          setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+        });
+        pre.appendChild(btn);
+      });
     </script>
   </body>
 </html>
 
 <style is:global>
-  :root { --bg:#05060b; --fg:#e8ebf5; --dim:#8b91a8; --a:#7c8cff; --c:#5eead4; --line:rgba(255,255,255,.12); --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace; --sans: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  :root {
+    --bg:#ffffff; --fg:#1b1d24; --muted:#5b6070; --line:#e3e5ec; --link:#4f46e5;
+    --code:#f3f4f8; --panel:#f8f9fc; --ok:#137333; --okbg:#e6f4ea; --plan:#b06000; --planbg:#fef7e0; --note:#eef0ff;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  :root[data-theme="dark"] {
+    --bg:#0d0f14; --fg:#e8eaf0; --muted:#98a0b3; --line:#262a35; --link:#9aa5ff;
+    --code:#181b23; --panel:#12151b; --ok:#81c995; --okbg:#12261a; --plan:#fdd663; --planbg:#2a2210; --note:#1a2040;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0d0f14; --fg:#e8eaf0; --muted:#98a0b3; --line:#262a35; --link:#9aa5ff;
+      --code:#181b23; --panel:#12151b; --ok:#81c995; --okbg:#12261a; --plan:#fdd663; --planbg:#2a2210; --note:#1a2040;
+      color-scheme: dark;
+    }
+  }
   * { box-sizing: border-box; margin: 0; }
-  html { color-scheme: dark; }
-  body { background: radial-gradient(60vw 40vw at 0% -10%, rgba(124,140,255,.25), transparent), var(--bg); color: var(--fg); font-family: var(--sans); line-height: 1.7; }
-  header { display: flex; gap: 1rem; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: .85rem; flex-wrap: wrap; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.7; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  header { display: flex; gap: .8rem; align-items: center; padding: .85rem 1.5rem; border-bottom: 1px solid var(--line); font-size: .9rem; position: sticky; top: 0; background: var(--bg); z-index: 5; }
   header a { color: var(--fg); text-decoration: none; }
-  .ver { color: var(--c); border: 1px solid rgba(94,234,212,.4); border-radius: 99px; padding: 0 .6rem; font-size: .75rem; }
-  header nav { margin-left: auto; display: flex; gap: 1.2rem; }
-  header nav a { color: var(--dim); }
-  .wrap { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 2.5rem; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
-  aside { display: flex; flex-direction: column; gap: .3rem; font-family: var(--mono); font-size: .82rem; position: sticky; top: 1rem; align-self: start; }
-  aside a { color: var(--dim); text-decoration: none; padding: .3rem .6rem; border-radius: 8px; }
-  aside a.active, aside a:hover { color: var(--fg); background: rgba(255,255,255,.07); }
-  .prose { max-width: 74ch; }
-  .prose h1 { font-size: 2rem; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; margin-bottom: 1rem; }
-  .prose h2 { font-size: 1.35rem; margin: 2.2rem 0 .6rem; padding-top: .6rem; border-top: 1px solid var(--line); }
-  .prose h3 { font-size: 1.05rem; margin: 1.4rem 0 .4rem; }
-  .prose p, .prose ul, .prose ol { margin: .7rem 0; color: #cfd3e4; }
+  .logo { font-weight: 650; letter-spacing: -.01em; }
+  .ver { font-family: var(--mono); font-size: .72rem; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: .05rem .45rem; }
+  header nav { margin-left: auto; display: flex; gap: 1.2rem; align-items: center; }
+  header nav a { color: var(--muted); font-weight: 500; }
+  header nav a:hover { color: var(--fg); }
+  #theme { font: inherit; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 8px; width: 2rem; height: 2rem; cursor: pointer; }
+  #theme:hover { color: var(--fg); border-color: var(--muted); }
+  .wrap { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 3rem; max-width: 1240px; margin: 0 auto; padding: 2.2rem 1.5rem 3rem; }
+  @media (min-width: 1150px) { .wrap { grid-template-columns: 230px minmax(0, 1fr) 190px; } }
+  aside, .toc { position: sticky; top: 4.6rem; align-self: start; display: flex; flex-direction: column; gap: .15rem; font-size: .88rem; }
+  .grp { font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: .9rem 0 .35rem; }
+  aside a, .toc a { color: var(--muted); text-decoration: none; padding: .32rem .7rem; border-radius: 8px; line-height: 1.4; }
+  .toc a { padding-left: 0; }
+  aside a:hover, .toc a:hover { color: var(--fg); }
+  aside a.active { color: var(--link); background: var(--note); font-weight: 500; }
+  .prose { max-width: 740px; }
+  .prose h1 { font-size: 2.35rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 1rem; }
+  .prose h2 { font-size: 1.5rem; font-weight: 650; letter-spacing: -.02em; line-height: 1.3; margin: 2.8rem 0 .7rem; scroll-margin-top: 5rem; }
+  .prose h3 { font-size: 1.12rem; font-weight: 600; margin: 1.8rem 0 .5rem; }
+  .prose p, .prose ul, .prose ol { margin: .85rem 0; }
   .prose ul, .prose ol { padding-left: 1.4rem; }
-  .prose a { color: var(--a); }
-  .prose code { font-family: var(--mono); font-size: .86em; background: rgba(255,255,255,.08); padding: .1em .35em; border-radius: 5px; }
-  .prose pre { background: rgba(0,0,0,.4); border: 1px solid var(--line); border-radius: 12px; padding: 1rem; overflow-x: auto; margin: 1rem 0; font-family: var(--mono); font-size: .82rem; line-height: 1.55; }
-  .prose pre code { background: none; padding: 0; }
-  .prose pre.mermaid { background: rgba(255,255,255,.04); text-align: center; font-family: var(--sans); }
-  .prose table { border-collapse: collapse; width: 100%; font-size: .88rem; display: block; overflow-x: auto; margin: 1rem 0; }
-  .prose th, .prose td { text-align: left; padding: .45rem .7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
-  .prose th { color: var(--dim); font-weight: 500; }
-  .prose blockquote, .prose .note { border-left: 3px solid var(--a); background: rgba(124,140,255,.08); padding: .6rem 1rem; border-radius: 0 10px 10px 0; margin: 1rem 0; color: #cfd3e4; }
-  .tag { font-family: var(--mono); font-size: .7rem; padding: .05rem .5rem; border-radius: 99px; border: 1px solid; white-space: nowrap; }
-  .tag.ok { color: var(--c); border-color: rgba(94,234,212,.5); }
-  .tag.plan { color: #f5c26b; border-color: rgba(245,194,107,.5); }
-  footer { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem 3rem; color: var(--dim); font-size: .8rem; font-family: var(--mono); }
-  @media (max-width: 760px) { .wrap { grid-template-columns: 1fr; } aside { position: static; flex-direction: row; flex-wrap: wrap; } }
+  .prose li { margin: .3rem 0; }
+  .prose li::marker { color: var(--muted); }
+  .prose strong { font-weight: 600; }
+  .prose a { color: var(--link); text-underline-offset: 3px; }
+  .prose code { font-family: var(--mono); font-size: .85em; background: var(--code); padding: .12em .38em; border-radius: 5px; }
+  .prose pre { position: relative; background: var(--code); border-radius: 10px; padding: 1rem 1.1rem; overflow-x: auto; margin: 1.1rem 0; font-family: var(--mono); font-size: .84rem; line-height: 1.6; }
+  .prose pre code { background: none; padding: 0; font-size: inherit; }
+  .prose pre.mermaid { background: var(--panel); border: 1px solid var(--line); text-align: center; font-family: var(--sans); padding: 1.4rem 1rem; }
+  .copy { position: absolute; top: .5rem; right: .5rem; font: 500 .72rem var(--sans); color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: .2rem .55rem; cursor: pointer; opacity: 0; transition: opacity .15s; }
+  .prose pre:hover .copy, .copy:focus { opacity: 1; }
+  @media (hover: none) { .copy { opacity: 1; } }
+  .prose table { border-collapse: collapse; width: 100%; font-size: .92rem; display: block; overflow-x: auto; margin: 1.2rem 0; }
+  .prose th, .prose td { text-align: left; padding: .6rem .85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .prose th { background: var(--panel); font-weight: 600; font-size: .82rem; color: var(--muted); }
+  .callout { border-left: 4px solid var(--link); background: var(--note); border-radius: 0 8px 8px 0; padding: .8rem 1.1rem; margin: 1.2rem 0; font-size: .95rem; }
+  .callout.caution { border-color: var(--plan); background: var(--planbg); }
+  .lead { font-size: 1.15rem; color: var(--muted); line-height: 1.6; }
+  .tag { font-size: .72rem; font-weight: 600; padding: .12rem .55rem; border-radius: 99px; white-space: nowrap; }
+  .tag.ok { color: var(--ok); background: var(--okbg); }
+  .tag.plan { color: var(--plan); background: var(--planbg); }
+  footer { max-width: 1240px; margin: 0 auto; padding: 1.4rem 1.5rem 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+  @media (max-width: 800px) { .wrap { grid-template-columns: 1fr; gap: 1rem; } aside { position: static; flex-direction: row; flex-wrap: wrap; } .grp { display: none; } .prose h1 { font-size: 1.9rem; } }
 </style>

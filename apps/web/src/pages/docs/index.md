@@ -1,31 +1,37 @@
 ---
 layout: ../../layouts/Doc.astro
-title: "Documentation"
+title: "Applied Machine documentation"
 ---
 
 # Applied Machine documentation
 
-These pages teach the whole system from first principles. They are written like lectures: an idea, a picture, a worked example, then exercises. You do not need a degree or prior experience.
+<p class="lead">Applied Machine is an open-source toolkit that turns the production traces of your AI agents into clean training data.</p>
 
-<p class="note">Every feature is marked <span class="tag ok">Implemented</span> (works today and is tested) or <span class="tag plan">Planned</span> (on the roadmap, not built). We never describe a planned feature as if it exists.</p>
+A trace is the record of one agent run: the user's request, the tool calls the agent made, its final answer, and optional feedback. Applied Machine collects traces, scores them, removes duplicates, and exports a dataset you can use to improve your model.
 
-## Start here
+## Product status
 
-| Lecture | You will learn | Time |
-|---|---|---|
-| [1. The improvement loop](architecture/) | what problem we solve, and how the pieces fit | 20 min |
-| [2. Scoring and dedup](scoring/) | how a trace becomes training data, and the bug that taught us to dedup after scoring | 25 min |
-
-## Coming next
-
-| Lecture | Status |
+| Capability | Status |
 |---|---|
-| The trace format | <span class="tag plan">Planned</span> |
-| The Go collector (ingest) | <span class="tag plan">Planned</span> |
-| Quickstart and how-to guides | <span class="tag plan">Planned</span> |
-| API and CLI reference | <span class="tag plan">Planned</span> |
-| Training, evaluation, safe release | <span class="tag plan">Planned</span>, after the features exist |
+| Collect traces over HTTP (Go service) | <span class="tag ok">Available</span> |
+| Clean large trace files (Rust tool) | <span class="tag ok">Available</span> |
+| Score, deduplicate, and export a dataset (Python tool) | <span class="tag ok">Available</span> |
+| Import from Langfuse and OpenTelemetry | <span class="tag plan">Planned</span> |
+| Train a model on the dataset | <span class="tag plan">Planned</span> |
+| Evaluate a new model against the old one | <span class="tag plan">Planned</span> |
+| Promote or reject a release | <span class="tag plan">Planned</span> |
 
-## How these docs stay correct
+<div class="callout caution"><strong>Early stage.</strong> Version 0.x. Interfaces can change between releases. Features marked Planned do not exist yet.</div>
 
-The version badge at the top comes from the package version. Every release updates the affected lectures in the same pull request as the code, and the release checklist in the repository (`docs/releasing.md`) makes that a required step. If you find a page that disagrees with the code, that is a bug: please open an issue.
+## Documentation
+
+| Page | Description |
+|---|---|
+| [How it works](architecture/) | The improvement loop, the components, and how data moves between them. |
+| [Scoring and deduplication](scoring/) | How a trace becomes training data, how to tune it, and its limits. |
+| [Playground](../playground/) | Paste your own traces and see the result in your browser. Nothing is uploaded. |
+
+## Conventions
+
+- **Available** means the feature works and has automated tests. **Planned** means it is on the roadmap and not built.
+- Each release updates the affected pages in the same change as the code. The version at the top of every page is the version the page describes.
