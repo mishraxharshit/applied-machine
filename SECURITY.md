@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 Please do **not** open a public issue. Use GitHub's private "Report a vulnerability" button
-on the Security tab, or email: `security@YOUR-DOMAIN` (replace before publishing).
+# on the Security tab, or email: `` (replace before publishing).
 
 We aim to acknowledge reports within 3 working days.
 
